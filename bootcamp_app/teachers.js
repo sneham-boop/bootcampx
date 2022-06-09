@@ -3,11 +3,10 @@ const { Pool } = require("pg");
 const getData = (arguments) => {
   const data = arguments.slice(2);
   const cohort = data[0];
-  const limit = parseInt(data[1]);
-  return { cohort, limit };
+  return { cohort};
 };
 
-const { cohort, limit } = getData(process.argv);
+const { cohort } = getData(process.argv);
 
 const pool = new Pool({
   user: "vagrant",
@@ -17,11 +16,13 @@ const pool = new Pool({
 });
 
 const SQLQuery = `
-SELECT students.id, students.name, cohorts.name as cohort_name
-FROM students
-JOIN cohorts ON cohorts.id = cohort_id
-WHERE cohorts.name LIKE '${cohort}%'
-LIMIT ${limit};
+SELECT DISTINCT teachers.name as teacher, cohorts.name AS cohort
+FROM assistance_requests
+JOIN teachers ON teachers.id = teacher_id
+JOIN students ON students.id = student_id
+JOIN cohorts ON students.cohort_id = cohorts.id
+WHERE cohorts.name = '${cohort}'
+ORDER BY teacher;
 `;
 
 pool
@@ -29,7 +30,7 @@ pool
   .then((res) => {
     res.rows.forEach((row) => {
       console.log(
-        `${row.name} has id of ${row.id} and as in the ${row.cohort_name} cohort.`
+        `${row.cohort}: ${row.teacher}`
       );
     });
   })
