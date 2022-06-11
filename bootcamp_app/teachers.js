@@ -3,10 +3,10 @@ const { Pool } = require("pg");
 const getData = (arguments) => {
   const data = arguments.slice(2);
   const cohort = data[0];
-  return { cohort};
+  return [cohort];
 };
 
-const { cohort } = getData(process.argv);
+const values = getData(process.argv);
 
 const pool = new Pool({
   user: "vagrant",
@@ -15,18 +15,18 @@ const pool = new Pool({
   database: "bootcampx",
 });
 
-const SQLQuery = `
+const text = `
 SELECT DISTINCT teachers.name as teacher, cohorts.name AS cohort
 FROM assistance_requests
 JOIN teachers ON teachers.id = teacher_id
 JOIN students ON students.id = student_id
 JOIN cohorts ON students.cohort_id = cohorts.id
-WHERE cohorts.name = '${cohort}'
+WHERE cohorts.name = $1
 ORDER BY teacher;
 `;
 
 pool
-  .query(SQLQuery)
+  .query(text, values)
   .then((res) => {
     res.rows.forEach((row) => {
       console.log(
